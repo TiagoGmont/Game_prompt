@@ -14,7 +14,7 @@ CESAR School
 
 <h1>Jogo da Cobrinha em C</h1>
 
-<p>Este projeto é uma recriação do popular jogo <strong>Crossy Road</strong>, desenvolvido em linguagem C. Criado por um time de três pessoas, o objetivo é trazer a experiência de desviar de obstáculos e atravessar ruas e rios para um ambiente de terminal, utilizando a lógica de programação e os conceitos da linguagem C.</p>
+<p>Este projeto é uma recriação do clássico jogo <strong>Cobrinha</strong>, desenvolvido em linguagem C. Criado por um grupo de três pessoas, o objetivo é proporcionar ao jogador a experiência de controlar uma cobra em crescimento, coletando itens e evitando obstáculos, tudo em um ambiente de terminal que explora a lógica de programação e os conceitos da linguagem C.</p>
 
 <h2>Objetivo do Jogo</h2>
 <p>No jogo da Cobrinha, o jogador assume o controle de uma cobra que se move pelo tabuleiro em busca de comida. Cada vez que a cobra consome um item, ela aumenta de tamanho, tornando o jogo progressivamente mais desafiador. O objetivo é acumular a maior pontuação possível sem colidir com as paredes ou com o próprio corpo da cobra.</p>
