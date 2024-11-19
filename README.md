@@ -30,10 +30,12 @@ CESAR School
     <pre><code>git clone https://github.com/seu-usuario/Game_prompt.git</code></pre>
   </li>
   <li>Compile o código:
-    <pre><code>gcc main.c -o snake_game</code></pre>
+    <pre><code>gcc cobrinha.c ./cli_lib_src/keyboard.c ./cli_lib_src/screen.c ./cli_lib_src/timer.c -I./cli_lib_include -o cobrinha
+</code></pre>
   </li>
   <li>Execute o jogo:
-    <pre><code>./snake_game</code></pre>
+    <pre><code>./cobrinha
+</code></pre>
   </li>
 </ol>  
 
