@@ -1,177 +1,274 @@
+// cobrinha.c
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <unistd.h>      // Para usar usleep()
+#include <unistd.h>
 #include "keyboard.h"
 #include "screen.h"
 #include "timer.h"
 
-#define MAX_SNAKE_LENGTH 30  // Tamanho máximo da cobra
+#define TAMANHO_INICIAL_COBRA 3
 
-// posições na tela
 typedef struct {
     int x, y;
-} Position;
+} Posicao;
 
-// Direções
-#define KEY_UP    1
-#define KEY_DOWN  2
-#define KEY_LEFT  3
-#define KEY_RIGHT 4
+#define TECLA_CIMA    1
+#define TECLA_BAIXO   2
+#define TECLA_ESQUERDA 3
+#define TECLA_DIREITA 4
+
+void telaInicial();
+void telaFinal(int pontuacao);
+void limparBufferEntrada();
 
 int main() {
-    Position snake[MAX_SNAKE_LENGTH]; // Array para armazenar as posições do corpo da cobra
-    int snake_length = 3;             // Comprimento inicial da cobra
-    int direction = KEY_RIGHT;        // Direção inicial da cobra
+    Posicao *cobra = NULL;       
+    int tamanho_cobra;            
+    int direcao;                  
     int ch;
-    int max_x = SCRENDX;              // Máximo valor de x (definido em screen.h)
-    int max_y = SCRENDY;              // Máximo valor de y (definido em screen.h)
-    Position food;                    // Posição da comida
-    int game_over = 0;                // Flag para indicar fim de jogo
+    int max_x = SCRENDX;
+    int max_y = SCRENDY;
+    Posicao comida;
+    int fim_de_jogo;
+    int pontuacao;
+    int jogar_novamente = 1;
 
-    // Inicializa as bibliotecas
-    screenInit(0);       // Inicializa a tela sem bordas
-    keyboardInit();      // Inicializa a entrada do teclado
-    timerInit(100);      // Configura o temporizador para 100 milissegundos
+    
+    screenInit(0);
+    keyboardInit();
+    timerInit(100);
 
-    // Esconde o cursor para melhor visualização
-    screenHideCursor();
+    while (jogar_novamente) {
+        
+        telaInicial();
 
-    // Semente para o gerador de números aleatórios
-    srand(time(NULL));
+        
+        tamanho_cobra = TAMANHO_INICIAL_COBRA;
+        direcao = TECLA_DIREITA;
+        fim_de_jogo = 0;
+        pontuacao = 0;
 
-    // Inicializa a posição inicial da cobra
-    snake[0].x = max_x / 2; // Cabeça da cobra
-    snake[0].y = max_y / 2;
+        
+        cobra = (Posicao *)malloc(sizeof(Posicao) * tamanho_cobra);
+        if (!cobra) {
+            fprintf(stderr, "Erro ao alocar memória para a cobra.\n");
+            exit(EXIT_FAILURE);
+        }
 
-    snake[1].x = snake[0].x - 1; // Segmento do corpo 1
-    snake[1].y = snake[0].y;
+        
+        screenHideCursor();
 
-    snake[2].x = snake[1].x - 1; // Segmento do corpo 2
-    snake[2].y = snake[1].y;
+        
+        srand(time(NULL));
 
-    // Gera a comida em posição aleatória
-    food.x = (rand() % (max_x - 1)) + 1;
-    food.y = (rand() % (max_y - 1)) + 1;
+        
+        cobra[0].x = max_x / 2;
+        cobra[0].y = max_y / 2;
 
-    while (!game_over) {
-        // Aguarda o intervalo do temporizador
-        if (timerTimeOver()) {
-            // Limpa a tela
-            screenClear();
+        cobra[1].x = cobra[0].x - 1;
+        cobra[1].y = cobra[0].y;
 
-            // Desenha a comida
-            screenGotoxy(food.x, food.y);
-            printf("O");
+        cobra[2].x = cobra[1].x - 1;
+        cobra[2].y = cobra[1].y;
 
-            // Desenho da cobra
-            for (int i = 0; i < snake_length; i++) {
-                screenGotoxy(snake[i].x, snake[i].y);
-                printf("@");
-            }
+        
+        comida.x = (rand() % (max_x - 1)) + 1;
+        comida.y = (rand() % (max_y - 1)) + 1;
 
-            // Atualiza a tela
-            screenUpdate();
+        while (!fim_de_jogo) {
+            if (timerTimeOver()) {
+                screenClear();
 
-            // Lida com a entrada do usuário sem bloquear
-            if (keyhit()) {
-                ch = readch();
-                if (ch == 27) { // Caractere ESC detectado
-                    if (keyhit()) {
-                        ch = readch();
-                        if (ch == '[') {
-                            if (keyhit()) {
-                                ch = readch();
-                                // Determina qual seta foi pressionada
-                                switch (ch) {
-                                    case 'A': // Seta para cima
-                                        if (direction != KEY_DOWN)
-                                            direction = KEY_UP;
-                                        break;
-                                    case 'B': // Seta para baixo
-                                        if (direction != KEY_UP)
-                                            direction = KEY_DOWN;
-                                        break;
-                                    case 'C': // Seta para a direita
-                                        if (direction != KEY_LEFT)
-                                            direction = KEY_RIGHT;
-                                        break;
-                                    case 'D': // Seta para a esquerda
-                                        if (direction != KEY_RIGHT)
-                                            direction = KEY_LEFT;
-                                        break;
+                
+                screenGotoxy(comida.x, comida.y);
+                printf("O");
+
+                
+                for (int i = 0; i < tamanho_cobra; i++) {
+                    screenGotoxy(cobra[i].x, cobra[i].y);
+                    printf("@");
+                }
+
+                screenUpdate();
+
+                
+                if (keyhit()) {
+                    ch = readch();
+                    if (ch == 27) {
+                        if (keyhit()) {
+                            ch = readch();
+                            if (ch == '[') {
+                                if (keyhit()) {
+                                    ch = readch();
+                                    switch (ch) {
+                                        case 'A':
+                                            if (direcao != TECLA_BAIXO)
+                                                direcao = TECLA_CIMA;
+                                            break;
+                                        case 'B':
+                                            if (direcao != TECLA_CIMA)
+                                                direcao = TECLA_BAIXO;
+                                            break;
+                                        case 'C':
+                                            if (direcao != TECLA_ESQUERDA)
+                                                direcao = TECLA_DIREITA;
+                                            break;
+                                        case 'D':
+                                            if (direcao != TECLA_DIREITA)
+                                                direcao = TECLA_ESQUERDA;
+                                            break;
+                                    }
                                 }
                             }
                         }
+                    } else if (ch == 'q') {
+                        fim_de_jogo = 1;
                     }
-                } else if (ch == 'q') {
-                    // Encerra o jogo se q for pressionad
-                    game_over = 1;
+                }
+
+                
+                Posicao nova_cabeca;
+                nova_cabeca = cobra[0]; 
+
+                
+                switch (direcao) {
+                    case TECLA_CIMA:
+                        nova_cabeca.y--;
+                        break;
+                    case TECLA_BAIXO:
+                        nova_cabeca.y++;
+                        break;
+                    case TECLA_ESQUERDA:
+                        nova_cabeca.x--;
+                        break;
+                    case TECLA_DIREITA:
+                        nova_cabeca.x++;
+                        break;
+                }
+
+                
+                if (nova_cabeca.x > max_x) nova_cabeca.x = 1;
+                if (nova_cabeca.x < 1)     nova_cabeca.x = max_x;
+                if (nova_cabeca.y > max_y) nova_cabeca.y = 1;
+                if (nova_cabeca.y < 1)     nova_cabeca.y = max_y;
+
+                
+                if (nova_cabeca.x == comida.x && nova_cabeca.y == comida.y) {
+                    pontuacao += 10; 
+
+                    
+                    tamanho_cobra++;
+                    Posicao *nova_cobra = (Posicao *)realloc(cobra, sizeof(Posicao) * tamanho_cobra);
+                    if (!nova_cobra) {
+                        fprintf(stderr, "Erro ao realocar memória para a cobra.\n");
+                        free(cobra);
+                        exit(EXIT_FAILURE);
+                    }
+                    cobra = nova_cobra;
+
+                    
+                    for (int i = tamanho_cobra - 1; i > 0; i--) {
+                        cobra[i] = cobra[i - 1];
+                    }
+                    cobra[0] = nova_cabeca;
+
+                    
+                    comida.x = (rand() % (max_x - 1)) + 1;
+                    comida.y = (rand() % (max_y - 1)) + 1;
+                } else {
+                    
+                    for (int i = tamanho_cobra - 1; i > 0; i--) {
+                        cobra[i] = cobra[i - 1];
+                    }
+                    cobra[0] = nova_cabeca;
+                }
+
+                
+                for (int i = 1; i < tamanho_cobra; i++) {
+                    if (cobra[0].x == cobra[i].x && cobra[0].y == cobra[i].y) {
+                        screenGotoxy(max_x / 2, max_y / 2);
+                        printf("Game Over!");
+                        screenUpdate();
+                        usleep(2000000);
+                        fim_de_jogo = 1;
+                        break;
+                    }
+                }
+
+                timerUpdateTimer(100);
+            }
+        }
+
+        
+        screenShowCursor();
+
+        
+        free(cobra);
+        cobra = NULL;
+
+        
+        telaFinal(pontuacao);
+
+        
+        int escolha_feita = 0;
+        while (!escolha_feita) {
+            if (keyhit()) {
+                ch = readch();
+                if (ch == '1') {
+                    jogar_novamente = 1;
+                    escolha_feita = 1;
+                } else if (ch == '2') {
+                    jogar_novamente = 0;
+                    escolha_feita = 1;
                 }
             }
-
-            // Move acobra
-            for (int i = snake_length - 1; i > 0; i--) {
-                snake[i] = snake[i - 1];
-            }
-
-            // Atualiza a cabeça da cobra com base na direção
-            switch (direction) {
-                case KEY_UP:
-                    snake[0].y--;
-                    break;
-                case KEY_DOWN:
-                    snake[0].y++;
-                    break;
-                case KEY_LEFT:
-                    snake[0].x--;
-                    break;
-                case KEY_RIGHT:
-                    snake[0].x++;
-                    break;
-            }
-
-            // Mantém a cobra dentro dos limites da tela (teletransporte)
-            if (snake[0].x > max_x) snake[0].x = 1;
-            if (snake[0].x < 1)     snake[0].x = max_x;
-            if (snake[0].y > max_y) snake[0].y = 1;
-            if (snake[0].y < 1)     snake[0].y = max_y;
-
-            // Verifica se a cobra comeu a comida
-            if (snake[0].x == food.x && snake[0].y == food.y) {
-                if (snake_length < MAX_SNAKE_LENGTH) {
-                    snake_length++; // Aumenta o tamanho da cobra
-                }
-                // Gera nova comida em posição aleatória
-                food.x = (rand() % (max_x - 1)) + 1;
-                food.y = (rand() % (max_y - 1)) + 1;
-            }
-
-            // Verifica colisão com o próprio corpo
-            for (int i = 1; i < snake_length; i++) {
-                if (snake[0].x == snake[i].x && snake[0].y == snake[i].y) {
-                    // Condição de fim de jogo
-                    screenGotoxy(max_x / 2, max_y / 2);
-                    printf("Game Over!");
-                    screenUpdate();
-                    usleep(2000000); // Pausa por 2 segundos
-                    game_over = 1;
-                    break;
-                }
-            }
-
-            // Reinicia o temporizador
-            timerUpdateTimer(100);
         }
     }
 
-    // Mostra o cursor novamente
-    screenShowCursor();
-
-    // Encerra/destroi as bibliotecas inicializadas
+    
     timerDestroy();
     keyboardDestroy();
     screenDestroy();
 
     return 0;
+}
+
+
+void telaInicial() {
+    screenClear();
+    screenGotoxy(SCRENDX / 2 - 10, SCRENDY / 2 - 2);
+    printf("Bem-vindo ao Jogo da Cobrinha!");
+    screenGotoxy(SCRENDX / 2 - 12, SCRENDY / 2);
+    printf("Pressione '1' para Jogar");
+    screenGotoxy(SCRENDX / 2 - 20, SCRENDY / 2 + 2);
+    printf("Use as setas do teclado para mover a cobra");
+    screenGotoxy(SCRENDX / 2 - 11, SCRENDY / 2 + 4);
+    printf("Pressione 'q' para sair durante o jogo");
+    screenUpdate();
+
+    
+    int iniciar_jogo = 0;
+    while (!iniciar_jogo) {
+        if (keyhit()) {
+            int ch = readch();
+            if (ch == '1') {
+                iniciar_jogo = 1;
+            }
+        }
+    }
+}
+
+
+void telaFinal(int pontuacao) {
+    screenClear();
+    screenGotoxy(SCRENDX / 2 - 5, SCRENDY / 2 - 2);
+    printf("Fim de Jogo!");
+    screenGotoxy(SCRENDX / 2 - 7, SCRENDY / 2);
+    printf("Pontuação: %d", pontuacao);
+    screenGotoxy(SCRENDX / 2 - 10, SCRENDY / 2 + 2);
+    printf("Pressione '1' para Jogar Novamente");
+    screenGotoxy(SCRENDX / 2 - 6, SCRENDY / 2 + 4);
+    printf("Pressione '2' para Sair");
+    screenUpdate();
 }
